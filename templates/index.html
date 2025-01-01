@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Enhancer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles for better design */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 2rem;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .suggestions ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .suggestions li {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+        }
+        .error-message {
+            color: #FF5733;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="container">
+        <h1 class="text-4xl font-bold text-center mb-12 text-blue-600">Resume Enhancer</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Upload Resume Section -->
+            <div class="card">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Upload Your Resume</h2>
+                <input
+                    type="file"
+                    id="resumeFile"
+                    accept=".pdf,.docx,.txt"
+                    class="mb-4 p-2 w-full border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                    onclick="enhanceResume()"
+                    class="btn w-full">
+                    Enhance Resume
+                </button>
+            </div>
+
+            <!-- Suggestions Section -->
+            <div class="card suggestions">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Suggestions</h2>
+                <div id="suggestions" class="overflow-auto h-96 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <!-- Suggestions will be listed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function enhanceResume() {
+            const fileInput = document.getElementById('resumeFile');
+            const suggestionsContainer = document.getElementById('suggestions');
+
+            if (!fileInput.files[0]) {
+                suggestionsContainer.innerHTML = '<p class="error-message">Please select a file to enhance.</p>';
+                return;
+            }
+
+            suggestionsContainer.innerHTML = '<p class="text-gray-500">Analyzing resume...</p>';
+
+            const formData = new FormData();
+            formData.append('resume', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/enhance', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                // Clear previous suggestions
+                suggestionsContainer.innerHTML = '';
+
+                if (data.error) {
+                    suggestionsContainer.innerHTML = `<p class="error-message">${data.error}</p>`;
+                } else {
+                    const suggestionsList = document.createElement('ul');
+
+                    // Split the suggestions by newlines and add each as a list item
+                    const suggestions = data.suggestions.split('\n');
+                    suggestions.forEach(suggestion => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('text-gray-700', 'text-sm');
+                        listItem.innerText = suggestion;
+                        suggestionsList.appendChild(listItem);
+                    });
+
+                    suggestionsContainer.appendChild(suggestionsList);
+                }
+
+            } catch (error) {
+                suggestionsContainer.innerHTML = `<p class="error-message">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
